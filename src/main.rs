@@ -1,9 +1,11 @@
-use clap::Parser;
-use std::fs::{self, DirEntry};
+use std::fs;
 use std::path::Path;
+use std::time::{SystemTime, UNIX_EPOCH};
 use chrono::{DateTime, Local};
+use clap::Parser;
 use tokio::io;
 use std::cmp::Reverse;
+
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -11,8 +13,15 @@ struct Args {
     path: String,
 }
 
+struct FileAccessInfo {
+    path: String,
+    accessed: SystemTime,
+}
+
 fn visit_dirs<F>(dir: &Path, cb: &mut F) -> io::Result<()>
-where F: FnMut(DirEntry){
+where
+    F: FnMut(FileAccessInfo),
+{
     if dir.is_dir() {
         for entry in fs::read_dir(dir)? {
             let entry = entry?;
@@ -20,31 +29,36 @@ where F: FnMut(DirEntry){
             if path.is_dir() {
                 visit_dirs(&path, cb)?;
             } else {
-                cb(entry);
+                // SAFELY get access time now, drop fd immediately
+                let accessed = entry
+                    .metadata()
+                    .and_then(|m| m.accessed())
+                    .unwrap_or(UNIX_EPOCH);
+
+                cb(FileAccessInfo {
+                    path: path.to_string_lossy().into_owned(),
+                    accessed,
+                });
             }
         }
     }
     Ok(())
 }
-fn collect_entry(vec: &mut Vec<DirEntry>, entry: DirEntry) {
-    vec.push(entry);
-}
- fn main() -> io::Result<()> {
+
+fn main() -> io::Result<()> {
     let args = Args::parse();
-     let mut collected_entries = Vec::new();
+    let mut collected = Vec::new();
 
-     visit_dirs(Path::new(&args.path), &mut |entry| {
-         collect_entry(&mut collected_entries, entry);
-     })?;
-     // Sort these entries by the last access time
-     collected_entries.sort_by_key(|entry| Reverse(entry.metadata().unwrap().accessed().unwrap()));
-     // print the last 5 accessed
-     let formatted = collected_entries.iter().take(5).map(|x| {
-         let t =  x.metadata().unwrap().accessed().unwrap();
-         let date_time: DateTime<Local> = t.into();
-         format!("{}  ({})", x.path().to_str().unwrap().to_owned(), date_time.format("%Y-%m-%d %H:%M:%S"))
-     }).collect::<Vec<_>>();
-     println!("{}", formatted.join("\n"));
-     Ok(())
+    visit_dirs(Path::new(&args.path), &mut |info| {
+        collected.push(info);
+    })?;
+
+    collected.sort_by_key(|info| Reverse(info.accessed));
+
+    for info in collected.iter().take(5) {
+        let dt: DateTime<Local> = info.accessed.into();
+        println!("{} ({})", info.path, dt.format("%Y-%m-%d %H:%M:%S"));
+    }
+
+    Ok(())
 }
-
