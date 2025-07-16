@@ -11,7 +11,12 @@ homepage = "https://github.com/AlexsJones/lz"
 categories = ["command-line-utilities", "filesystem"]
 keywords = ["cli", "filesystem", "access-time", "recent-files"]
 readme = "README.md"
-
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/lz", dest = "/usr/bin/lz", mode = "755" }
+]
+license = "MIT"
+summary = "A CLI tool to list the 5 most recently accessed files in a directory tree, sorted by last access time."
 [dependencies]
 chrono = "0.4.41"
 clap = { version = "4.5.41", features = ["derive"] }
