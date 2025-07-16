@@ -1,6 +1,6 @@
 [package]
 name = "lz"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "A CLI tool to list the 5 most recently accessed files in a directory tree, sorted by last access time."
 authors = ["Alex Jones <alexsimonjones@gmail.com>"]
