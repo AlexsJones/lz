@@ -1,0 +1,18 @@
+[package]
+name = "lz"
+version = "0.1.0"
+edition = "2024"
+description = "A CLI tool to list the 5 most recently accessed files in a directory tree, sorted by last access time."
+authors = ["Alex Jones <alexsimonjones@gmail.com>"]
+license = "MIT"
+repository = "https://github.com/AlexsJones/lz"
+documentation = "https://github.com/AlexsJones/lz"
+homepage = "https://github.com/AlexsJones/lz"
+categories = ["command-line-utilities", "filesystem"]
+keywords = ["cli", "filesystem", "access-time", "recent-files"]
+readme = "README.md"
+
+[dependencies]
+chrono = "0.4.41"
+clap = { version = "4.5.41", features = ["derive"] }
+tokio = { version = "1.46.1", features = ["full"] }
