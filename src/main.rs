@@ -16,7 +16,11 @@ use std::time::Duration;
 struct Args {
     #[clap(short, long, default_value = ".")]
     path: String,
-    /// Include hidden folders (those starting with a dot)
+
+    // Reverse to find oldest files
+    #[clap(short, long)]
+    reverse: bool,
+
     #[clap(long)]
     hidden: bool,
 }
@@ -112,8 +116,11 @@ fn main() -> io::Result<()> {
     pb.set_message(format!("Files counted: {}", files_scanned.load(Ordering::Relaxed)));
     pb.finish_with_message(format!("Scan complete. Total files counted: {}", files_scanned.load(Ordering::Relaxed)));
 
-    collected.sort_by_key(|info| Reverse(info.accessed));
-
+    if args.reverse {
+        collected.sort_by_key(|info| info.accessed);
+    }else {
+        collected.sort_by_key(|info| Reverse(info.accessed));
+    }
     for info in collected.iter().take(5) {
         let dt: DateTime<Local> = info.accessed.into();
         println!("{} ({})", info.path, dt.format("%Y-%m-%d %H:%M:%S"));
