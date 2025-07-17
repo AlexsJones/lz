@@ -1,6 +1,8 @@
 # lz
 
-A fast CLI tool to list the 5 most recently accessed files in a directory tree, sorted by last access time.
+A blazingly fast CLI tool to list the 5 most recently accessed files in a directory tree, sorted by last access time.
+
+<img src="demo.gif" width="600px;">
 
 ## Features
 - Recursively scans a directory and its subdirectories
