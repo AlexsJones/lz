@@ -7,8 +7,12 @@ on:
 
 jobs:
   build:
-    name: Build and Upload Release Binary
-    runs-on: ubuntu-latest
+    name: Build Release Binaries
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        arch: [x64, arm64]
 
     steps:
       - name: Checkout code
@@ -20,20 +24,38 @@ jobs:
           toolchain: stable
           override: true
 
-      - name: Build release binary
-        run: cargo build --release
+      - name: Install dependencies for cross-compilation
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
 
-      - name: Prepare binary for upload
+      - name: Add Rust target for cross-compilation
         run: |
-          cp target/release/${{ github.event.repository.name }} ${{ github.event.repository.name }}-linux-amd64
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ] && [ "${{ matrix.arch }}" == "arm64" ]; then echo aarch64-unknown-linux-gnu; \
+             elif [ "${{ matrix.os }}" == "macos-latest" ] && [ "${{ matrix.arch }}" == "arm64" ]; then echo aarch64-apple-darwin; \
+             else echo; fi \
+          | xargs -r rustup target add
+
+      - name: Build release binary
+        run: |
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ] && [ "${{ matrix.arch }}" == "arm64" ]; then TARGET=aarch64-unknown-linux-gnu; SUFFIX=linux-arm64; \
+          elif [ "${{ matrix.os }}" == "ubuntu-latest" ] && [ "${{ matrix.arch }}" == "x64" ]; then TARGET=; SUFFIX=linux-amd64; \
+          elif [ "${{ matrix.os }}" == "macos-latest" ] && [ "${{ matrix.arch }}" == "arm64" ]; then TARGET=aarch64-apple-darwin; SUFFIX=darwin-arm64; \
+          else TARGET=; SUFFIX=darwin-amd64; fi; \
+          cargo build --release ${TARGET:+--target $TARGET}; \
+          if [ -n "$TARGET" ]; then cp target/$TARGET/release/${{ github.event.repository.name }} ${{ github.event.repository.name }}-$SUFFIX; else cp target/release/${{ github.event.repository.name }} ${{ github.event.repository.name }}-$SUFFIX; fi
 
       - name: Create Release and Upload Asset
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           draft: false
           prerelease: false
-          files: ${{ github.event.repository.name }}-linux-amd64
+          files: |
+            ${{ github.event.repository.name }}-linux-amd64
+            ${{ github.event.repository.name }}-linux-arm64
+            ${{ github.event.repository.name }}-darwin-amd64
+            ${{ github.event.repository.name }}-darwin-arm64
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
