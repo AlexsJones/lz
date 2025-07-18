@@ -36,9 +36,17 @@ jobs:
           | xargs -r rustup target add
 
       - name: Build release binary
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'arm64'
+        uses: houseabsolute/actions-rust-cross@v1
+        with:
+          command: build
+          target: aarch64-unknown-linux-gnu
+          args: --release
+
+      - name: Build release binary
+        if: matrix.os != 'ubuntu-latest' || matrix.arch != 'arm64'
         run: |
-          if [ "${{ matrix.os }}" == "ubuntu-latest" ] && [ "${{ matrix.arch }}" == "arm64" ]; then TARGET=aarch64-unknown-linux-gnu; SUFFIX=linux-arm64; \
-          elif [ "${{ matrix.os }}" == "ubuntu-latest" ] && [ "${{ matrix.arch }}" == "x64" ]; then TARGET=; SUFFIX=linux-amd64; \
+          if [ "${{ matrix.os }}" == "ubuntu-latest" ] && [ "${{ matrix.arch }}" == "x64" ]; then TARGET=; SUFFIX=linux-amd64; \
           elif [ "${{ matrix.os }}" == "macos-latest" ] && [ "${{ matrix.arch }}" == "arm64" ]; then TARGET=aarch64-apple-darwin; SUFFIX=darwin-arm64; \
           else TARGET=; SUFFIX=darwin-amd64; fi; \
           cargo build --release ${TARGET:+--target $TARGET}; \
