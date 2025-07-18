@@ -52,18 +52,32 @@ jobs:
           cargo build --release ${TARGET:+--target $TARGET}; \
           if [ -n "$TARGET" ]; then cp target/$TARGET/release/${{ github.event.repository.name }} ${{ github.event.repository.name }}-$SUFFIX; else cp target/release/${{ github.event.repository.name }} ${{ github.event.repository.name }}-$SUFFIX; fi
 
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.repository.name }}-${{ matrix.os }}-${{ matrix.arch }}
+          path: ${{ github.event.repository.name }}-*
+
+  release:
+    name: Create Release and Upload Assets
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display downloaded files
+        run: ls -R artifacts
+
       - name: Create Release and Upload Asset
-        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'x64'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
           draft: false
           prerelease: false
-          files: |
-            ${{ github.event.repository.name }}-linux-amd64
-            ${{ github.event.repository.name }}-linux-arm64
-            ${{ github.event.repository.name }}-darwin-amd64
-            ${{ github.event.repository.name }}-darwin-arm64
+          files: artifacts/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
