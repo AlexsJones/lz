@@ -20,13 +20,18 @@ Add to your Cargo.toml or install via cargo:
 cargo install lz
 ```
 
-````
+### Homebrew
+
+```
+brew tap AlexsJones/lz
+brew install lz
+```
 
 ## Usage
 
 ```sh
 lz [OPTIONS] [--path <PATH>]
-````
+```
 
 - `--path <PATH>`: The root directory to scan (defaults to current directory)
 
@@ -53,4 +58,3 @@ Licensed under the MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.
 ## Contributing
 
 Pull requests and issues are welcome!
-

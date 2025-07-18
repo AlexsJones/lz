@@ -1,6 +1,6 @@
 [package]
 name = "lz"
-version = "0.4.0"
+version = "0.5.0"
 edition = "2024"
 description = "A CLI tool to list the 5 most recently accessed files in a directory tree, sorted by last access time."
 authors = ["Alex Jones <alexsimonjones@gmail.com>"]
@@ -12,9 +12,7 @@ categories = ["command-line-utilities", "filesystem"]
 keywords = ["cli", "filesystem", "access-time", "recent-files"]
 readme = "README.md"
 [package.metadata.generate-rpm]
-assets = [
-    { source = "target/release/lz", dest = "/usr/bin/lz", mode = "755" }
-]
+assets = [{ source = "target/release/lz", dest = "/usr/bin/lz", mode = "755" }]
 license = "MIT"
 summary = "A CLI tool to list the 5 most recently accessed files in a directory tree, sorted by last access time."
 [dependencies]
